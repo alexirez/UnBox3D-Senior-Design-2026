@@ -1,94 +1,92 @@
-# Unfold3D
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td align="center"><img src="UnBox3D/Assets/Images/unbox3d-logo.jpg" height="120" width="auto" /></td>
+      <td align="center"><img src="UnBox3D/Assets/Images/csula-logo.png" height="120" width="auto" /></td>
+      <td align="center"><img src="UnBox3D/Assets/Images/armyresearchlab.png" height="120" width="auto" /></td>
+    </tr>
+  </table>
+</div>
 
-A .NET-based toolchain for simplifying 3D meshes, unfolding them to 2D, and exporting cut-ready plans for fabrication (e.g., laser cutters). This repository includes the core engine, UI, and command‑line entry points used to load meshes, apply simplification, compute seam placement and unfolding, then emit 2D layouts with part IDs, fold types, and assembly annotations.
+<br />
+
+<div align="center">
+
+# UnBox3D
+
+**3D mesh unfolding and fabrication toolchain for .NET**
+
+UnBox3D takes any 3D model and flattens it into precise, cut-ready 2D layouts complete with fold annotations, part IDs, and assembly instructions. Built for convenient use with laser cutters and CNC machines.
+
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat-square)](https://dotnet.microsoft.com/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-informational?style=flat-square)](https://github.com/alexirez/UnBox3D-Senior-Design-2026)
+[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+
+</div>
 
 ---
 
-## Table of Contents
+<details>
+<summary><b>Table of Contents</b></summary>
 
-* [Overview](#overview)
-* [Key Features](#key-features)
-* [Architecture at a Glance](#architecture-at-a-glance)
-* [System Requirements](#system-requirements)
-* [Getting Started](#getting-started)
+- [Overview](#overview)
+- [System Requirements](#system-requirements)
+- [Key Features](#key-features)
+- [Using UnBox3D](#using-unbox3d)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [For Future Contributors](#for-future-contributors)
+- [Contributors](#contributors)
 
-  * [Prerequisites](#prerequisites)
-  * [Clone & Restore](#clone--restore)
-  * [Build](#build)
-  * [Run (CLI)](#run-cli)
-  * [Run (GUI)](#run-gui)
-* [Configuration](#configuration)
-* [Using Unfold3D](#using-unfold3d)
-
-  * [Typical Workflow](#typical-workflow)
-  * [Supported Formats](#supported-formats)
-  * [Command Examples](#command-examples)
-* [Output](#output)
-* [Project Structure](#project-structure)
-* [Testing](#testing)
-* [Publish / Distribute](#publish--distribute)
-* [Troubleshooting](#troubleshooting)
-* [Contributing](#contributing)
-* [License](#license)
+</details>
 
 ---
 
 ## Overview
 
-Unfold3D implements the pipeline described in the Software Design Document (SDD):
+<img src="UnBox3D/Assets/Images/successful-unfold.jpg" alt="Successful unfold output" align="right" width="380" style="margin-left: 20px; border-radius: 8px;" />
 
-1. **Mesh ingestion & display**
-2. **Mesh simplification** (e.g., edge-collapse / quadric error metrics)
-3. **Seam selection & unfolding to 2D**
-4. **Layout packing** to fit sheets/bed sizes
-5. **Exporter** producing fabrication files (DXF/SVG/PDF) with cut/score instructions and assembly hints
+UnBox3D implements a full pipeline from 3D input to fabrication-ready output:
 
-The goal is to provide a consistent, reproducible path from 3D input → simplified 2D plans suitable for laser cutting and accurate reassembly.
+1. **Mesh ingestion** — import OBJ, STL, or PLY files
+2. **Simplification** — reduce polygon count via quadric error metrics
+3. **Seam selection & unfolding** — automatic or manual seam placement, unwrap to flat 2D islands
+4. **Layout packing** — non-overlapping arrangement within your sheet or bed size
+5. **Export** — SVG or PDF with dedicated cut, score, and label layers
 
-## Key Features
+The goal is a consistent, reproducible path from any 3D mesh to physical assembly — maximum automation for the most efficient workflow.
 
-* Import common mesh formats (e.g., OBJ, STL, PLY)
-* Deterministic simplification with tunable error budgets
-* Automatic seam placement with heuristics (curvature, geodesic distance, part size)
-* Non-overlapping 2D unwrap with layout packing
-* Export to **DXF**, **SVG**, and **PDF** with layers for cut/score/labels
-* CLI for batch jobs; optional desktop UI for interactive preview
+<br clear="right" />
 
-## Architecture at a Glance
+### Pipeline
 
+<div align="center">
+  <img src="UnBox3D/Assets/Images/unbox3d-pipeline.png" alt="UnBox3D pipeline diagram" width="720" />
+</div>
 
+---
 
-```
-UnBox3D.sln
-├─ Assets/
-│  └─ Icons/                       # Application and UI icons
-├─ Commands/                       # Command logic (e.g., replace, export, simplify)
-├─ Controls/                       # Mouse, camera, and UI interaction handlers
-├─ Models/                         # Core 3D data structures (mesh, cylinder, simplification)
-├─ Properties/
-│  └─ PublishProfiles/             # Publishing and deployment configuration
-├─ Rendering/                      # OpenGL rendering, shaders, and scene drawing
-├─ Scripts/                        # Optional setup, build, or automation scripts
-├─ Utils/                          # Helper utilities, logging, settings, and memory management
-├─ ViewModels/                     # Data bindings between models and UI views
-├─ Views/                          # WPF/XAML views and user interface layouts
-├─ App.xaml                        # Application entry point
-├─ App.xaml.cs                     # Application startup logic
-├─ AssemblyInfo.cs                 # Assembly metadata
-├─ UnBox3D.csproj                  # Project file
-└─ UnBox3D.sln                     # Solution file
-```
+## Blender Integration
 
-* **Core** encapsulates mesh ops and unfolding algorithms.
-* **IO** contains importers/exporters and format adapters.
-* **UI** (if present) provides viewport rendering (3D/2D) and workflow controls.
-* **App** wires everything together with DI, config, logging, and CLI commands.
+<img src="https://download.blender.org/institute/logos/blenderlogocolor.png" alt="Blender" align="right" width="300" style="margin-left: 20px;" />
+Blender drives a significant portion of UnBox3D's core functionality. Mesh processing, seam detection, and the unfolding computation all run through Blender's Python API.
+
+Central to this is the **Export Paper Model** addon, which handles the conversion of a 3D mesh into a printable 2D net. We are grateful to [**addam**](https://github.com/addam) for their work on this addon — without it, the unfolding pipeline would not be possible.
+
+- 📦 [Addon on Blender Extensions](https://extensions.blender.org/add-ons/export-paper-model/)
+- 💻 [Source on GitHub](https://github.com/addam/Export-Paper-Model-from-Blender)
+
+> Blender 4.3 or higher is recommended. If not already installed, UnBox3D will install it automatically on first launch.
+
+<br clear="right" />
+
+---
 
 ## System Requirements
 
-* **.NET 8 SDK** or newer
-* Windows 10/11 (x64) recommended; Linux/macOS supported for CLI
-* For UI builds on Linux/macOS, ensure your chosen UI framework is supported
+- **.NET 8 SDK** or newer
+- **Windows 10/11 (x64)** recommended; Linux/macOS supported for CLI
+- For GUI builds, Windows is required (WPF)
 
 Verify your setup:
 
@@ -96,55 +94,141 @@ Verify your setup:
 dotnet --info
 ```
 
+---
+
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 🗂 Mesh Import | OBJ, STL, PLY with automatic triangulation |
+| ✂️ Simplification | Quadric error metrics with tunable face-count and error budgets |
+| 🧵 Seam Placement | Heuristic selection based on curvature, geodesic distance, and part size |
+| 📐 2D Unwrap | Non-overlapping layout packing with configurable sheet margins |
+| 📤 Export | DXF, SVG, and PDF with separate cut / score / label layers |
+| 🖥 Desktop GUI | Interactive 3D viewport for preview and manual editing |
+| ⌨️ CLI | Batch and headless operation for automation and CI |
+
+### Tech Stack
+
+From importing to unfolding, open source tools and libraries are utilized for tried-and-tested moves towards a reliable end result.
+
+<div align="center">
+  <img src="UnBox3D/Assets/Images/techstack.png" alt="Tech stack" width="600" />
+</div>
+
+---
+
+## Using UnBox3D
+
+### Viewport & Gizmos
+
+The desktop GUI provides a full 3D viewport with transform gizmos for positioning, rotating, and scaling the mesh before unfolding.
+
+<div align="center">
+  <img src="UnBox3D/Assets/Images/example-gizmos.png" alt="3D viewport with transform gizmos" width="680" />
+</div>
+
+### Mesh Simplification
+
+UnBox3D can reduce high-polygon meshes to a manageable face count before unfolding, preserving shape fidelity while making the output suitable for fabrication.
+
+<div align="center">
+  <img src="UnBox3D/Assets/Images/example-simplify.png" alt="Mesh simplification example" width="680" />
+</div>
+
+### Typical Workflow
+
+1. **Import** a mesh (OBJ / STL / PLY)
+2. **Simplify** to a target face count or error threshold
+3. **Mark seams** manually or let the heuristic handle it, then **unwrap**
+4. **Pack** islands into your sheet/bed dimensions
+5. **Export** DXF / SVG / PDF with cut and score layers
+
+### Supported Formats
+
+| Direction | Formats |
+|-----------|---------|
+| Input | OBJ, STL, PLY |
+| Output | DXF (R12+), SVG, PDF |
+
+---
+
 ## Getting Started
 
 ### Prerequisites
 
-* Install [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download)
-* (Optional) **JetBrains Rider** or **Visual Studio 2022** / **VS Code**
+- [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download)
+- Optionally: JetBrains Rider or Visual Studio 2022
+- Blender will be installed automatically on first launch. If already installed, it will be loaded automatically instead. Blender 4.3 or higher is recommended.
 
-### Clone & Restore
-
-```bash
-git clone <repo-url> Unfold3D
-cd Unfold3D
+<details>
+ <summary><b>Clone & Restore</b></summary>
+ 
+ ```bash
+ git clone https://github.com/alexirez/UnBox3D-Senior-Design-2026.git
+ cd UnBox3D-Senior-Design-2026
  dotnet restore
-```
+ ```
+</details>
 
-### Build
-
-```bash
-# Build the whole solution
- dotnet build -c Release
-
-# Or build a specific project (adjust path if different)
- dotnet build src/UnBox3D/UnBox3D.csproj -c Release
-```
-
-### Run (CLI)
+<details>
+<summary><b>Build</b></summary>
 
 ```bash
-# From repo root (adjust project path if needed)
- dotnet run --project src/UnBox3D/UnBox3D.csproj -- \
+# Full solution
+dotnet build -c Release
+
+# Specific project
+dotnet build src/UnBox3D/UnBox3D.csproj -c Release
+```
+
+</details>
+
+<details>
+<summary><b>Run (GUI)</b></summary>
+
+```bash
+dotnet run --project src/UnBox3D.UI/UnBox3D.UI.csproj -c Debug
+```
+
+Or open the solution in Rider / Visual Studio and press ▶️.
+
+</details>
+
+<details>
+<summary><b>Run (CLI)</b></summary>
+
+```bash
+dotnet run --project src/UnBox3D/UnBox3D.csproj -- \
   --input assets/samples/bunny.obj \
   --target-faces 5000 \
   --sheet-width 600 --sheet-height 400 \
-  --export dxf --out ./out/bunny
+  --export svg --out ./out/bunny
 ```
 
-### Run (GUI)
+**Common flags:**
 
-If a desktop UI project is included (e.g., `UnBox3D.UI`):
-
-```bash
- dotnet run --project src/UnBox3D.UI/UnBox3D.UI.csproj -c Debug
+```
+--input <file|folder>       Mesh file or folder for batch mode
+--target-faces <int>        Simplification target (face count)
+--max-error <float>         Simplification target (quadric error)
+--sheet-width <mm>          Sheet width
+--sheet-height <mm>         Sheet height
+--pack-padding <mm>         Margin between packed islands
+--export <dxf|svg|pdf>      Output format
+--out <path>                Output directory
+--labels on|off             Include part/assembly labels
+--headless                  CI/batch mode (no GUI)
+--verbose                   Detailed logging
 ```
 
-Or use **Rider**: open the solution, choose the UI project run configuration, and press ▶️.
+</details>
+
+---
 
 ## Configuration
 
-Runtime settings can be supplied via command-line flags or `appsettings.json` next to the app:
+Settings can be supplied via CLI flags or `appsettings.json` placed next to the app:
 
 ```json
 {
@@ -159,7 +243,7 @@ Runtime settings can be supplied via command-line flags or `appsettings.json` ne
       "Sheet": { "WidthMm": 600, "HeightMm": 400 }
     },
     "Export": {
-      "Format": "DXF",  
+      "Format": "DXF",
       "IncludeLabels": true,
       "LayerNames": { "Cut": "CUT", "Score": "SCORE", "Text": "TEXT" }
     }
@@ -167,134 +251,91 @@ Runtime settings can be supplied via command-line flags or `appsettings.json` ne
 }
 ```
 
-You can also use environment variables (e.g., `Unfold3D__Export__Format=SVG`).
+Environment variables are also supported: `Unfold3D__Export__Format=SVG`
 
-## Using Unfold3D
+---
 
-### Typical Workflow
+## For Future Contributors
 
-1. **Import** a mesh (OBJ/STL/PLY)
-2. **Simplify** to target face count or error threshold
-3. **Mark/auto-select seams** and **unwrap** to 2D islands
-4. **Pack** islands into sheets using bed size & margins
-5. **Export** DXF/SVG/PDF with cut/score layers and labels
+<details>
+<summary><b>Architecture Overview</b></summary>
 
-### Supported Formats
+```
+UnBox3D.sln
+├─ Assets/                  Application and UI icons
+├─ Commands/                Command logic (export, simplify, replace)
+├─ Controls/                Mouse, camera, and UI interaction
+├─ Models/                  Core 3D data structures (mesh, simplification)
+├─ Rendering/               OpenGL rendering, shaders, scene drawing
+├─ Scripts/                 Build and automation scripts
+├─ Utils/                   Logging, settings, memory management
+├─ ViewModels/              Data bindings between models and views
+├─ Views/                   WPF/XAML UI layouts
+└─ UnBox3D.csproj
+```
 
-* **Input**: OBJ, STL, PLY (extendable)
-* **Output**: DXF (R12+), SVG, PDF
+- **Core** encapsulates mesh ops and unfolding algorithms
+- **IO** contains importers/exporters and format adapters
+- **UI** provides the 3D/2D viewport and workflow controls
+- **App** wires everything together with DI, config, logging, and CLI
 
-### Command Examples
+</details>
+
+<details>
+<summary><b>Testing</b></summary>
+
+Logs are saved to AppData automatically. Existing test cases are located in UnBox3D.Tests/Models, although automated testing remains quite limited.
+
+</details>
+
+<details>
+<summary><b>Publish / Distribute</b></summary>
 
 ```bash
-# Minimal: import & export with defaults
- dotnet run --project src/UnBox3D/UnBox3D.csproj -- \
-  --input ./assets/samples/box.stl --export svg --out ./out/box
+# Windows x64 (self-contained)
+dotnet publish src/UnBox3D/UnBox3D.csproj -c Release -r win-x64 \
+  --self-contained true -p:PublishSingleFile=true -o ./publish/win
 
-# Set target faces and sheet size
- dotnet run --project src/UnBox3D/UnBox3D.csproj -- \
-  --input ./assets/samples/bunny.obj \
-  --target-faces 8000 \
-  --sheet-width 500 --sheet-height 300 \
-  --export dxf --out ./out/bunny
-
-# Batch process a folder of meshes
- dotnet run --project src/UnBox3D/UnBox3D.csproj -- \
-  --input ./assets/batch --recursive --export pdf --out ./out/batch
+# Linux / macOS
+dotnet publish src/UnBox3D/UnBox3D.csproj -c Release -r linux-x64 -o ./publish/linux
+dotnet publish src/UnBox3D/UnBox3D.csproj -c Release -r osx-arm64  -o ./publish/osx
 ```
 
-Common flags (adjust to your CLI implementation):
+</details>
 
-```
---input <fileOrFolder>
---target-faces <int> | --max-error <float>
---sheet-width <mm> --sheet-height <mm> --pack-padding <mm>
---export <dxf|svg|pdf> --out <path>
---labels on|off --layers <cutLayer,scoreLayer,textLayer>
---headless (for CI)
---verbose
-```
+<details>
+<summary><b>Troubleshooting</b></summary>
 
-## Output
+**`MSB1009: Project file does not exist`** — run `dir /s *.csproj` (Windows) or `find . -name "*.csproj"` to locate the correct path.
 
-Generated files are placed under the `--out` directory:
+**Overlapping islands** — increase `--pack-padding` and/or reduce `--target-faces` before unwrapping.
 
-* `*.dxf`, `*.svg`, or `*.pdf` – cut-ready plans
-* `manifest.json` – metadata (parts, seams, fold types, scales) (optional)
-* `preview.png` – quick 2D snapshot (optional)
+**Wrong scale in output** — ensure mesh units are in mm. Some OBJ/STL files are unitless; use a known reference part or add an explicit scale flag.
 
-## Project Structure
+**GUI won't run on Linux/macOS** — WPF is Windows-only. Use the CLI, or consider an Avalonia port for cross-platform GUI.
 
-```
-src/
-  UnBox3D/            # Program.cs, CLI verbs, DI, logging
-  UnBox3D.Core/       # Geometry, simplification, unwrap, packing
-  UnBox3D.IO/         # Parsers & exporters
-  UnBox3D.UI/         # Desktop app (if included)
-  UnBox3D.Tests/      # xUnit/NUnit tests
-assets/
-  samples/            # Example meshes
-out/                  # Build & export artifacts (gitignored)
-```
+</details>
 
-## Testing
+<details>
+<summary><b>Contributing</b></summary>
 
-```bash
- dotnet test
-```
-
-## Publish / Distribute
-
-Create a platform-specific build:
-
-```bash
-# Windows x64, framework-dependent
- dotnet publish src/UnBox3D/UnBox3D.csproj -c Release -r win-x64 --no-self-contained -o ./publish/win
-
-# Self-contained (no runtime required)
- dotnet publish src/UnBox3D/UnBox3D.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/win-sc
-
-# Linux & macOS variants
- dotnet publish src/UnBox3D/UnBox3D.csproj -c Release -r linux-x64   -o ./publish/linux
- dotnet publish src/UnBox3D/UnBox3D.csproj -c Release -r osx-arm64   -o ./publish/osx
-```
-
-> **Tip:** Ensure the path to your `.csproj` is correct. From solution root, it is commonly `src/UnBox3D/UnBox3D.csproj`. If you see `MSB1009: Project file does not exist`, verify the relative path or provide an absolute path.
-
-## Troubleshooting
-
-* **MSBUILD : error MSB1009: Project file does not exist.**
-
-  * Run `dir /s *.csproj` (Windows) or `find . -name "*.csproj"` to locate the actual project path.
-  * Use that exact path in `dotnet run --project <path>` or `dotnet publish <path>`.
-  * Avoid mixing `\` and `/` incorrectly on Windows; quotes can help: `"src/UnBox3D/UnBox3D.csproj"`.
-
-* **Cannot load mesh / format not recognized**
-
-  * Confirm the file extension and that the importer supports it.
-  * Try triangulating meshes and removing non-manifold edges in your DCC tool first.
-
-* **Overlapping islands in 2D**
-
-  * Increase `--pack-padding` and/or adjust sheet size.
-  * Reduce target faces before unwrap.
-
-* **Wrong scale in output**
-
-  * Ensure units are consistent (mm). Some OBJ/STL files are unitless.
-  * Use a known reference part or set an explicit scale flag.
-
-* **UI doesn’t run on non‑Windows**
-
-  * Some UI stacks (WPF) are Windows-only. Use CLI on Linux/macOS or switch to Avalonia/WinUI if cross‑platform UI is required.
-
-## Contributing
-
-1. Fork the repo and create a feature branch
+1. Fork and create a feature branch
 2. Add tests for new functionality
-3. Ensure `dotnet format`/linters pass
+3. Run `dotnet format` and ensure linters pass
 4. Open a PR with a clear description and screenshots for UI changes
 
-## License
+</details>
 
-Specify your license here (e.g., MIT). Add `LICENSE` at the repo root.
+---
+
+## Contributors
+
+<a href="https://github.com/alexirez/UnBox3D-Senior-Design-2026/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=alexirez/UnBox3D-Senior-Design-2026" alt="Contributors" />
+</a>
+
+---
+
+<div align="center">
+  <sub>Built at <a href="https://www.calstatela.edu/">Cal State LA</a> in partnership with the <a href="https://www.arl.army.mil/">Army Research Laboratory</a></sub>
+</div>
